@@ -5,7 +5,7 @@ import (
 	"flag"
 	"log"
 
-	"github.com/Speshl/GoRemoteControl/client"
+	"github.com/Speshl/GoRemoteControl_Client/client"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -14,8 +14,12 @@ func main() {
 	showJoyStats := flag.Bool("joystats", false, "Shows states of connected joysticks")
 
 	udpPort := flag.String("joystickport", "1053", "Joystick Port")
+	host := flag.String("host", "localhost", "IP of udp server")
 
 	controlDeviceCfg := flag.String("cfg", "./configs/g27.json", "Path to cfg json")
+	invertESC := flag.Bool("invertesc", false, "Invert ESC value")
+	invertSteering := flag.Bool("invertsteer", false, "Invert Steer value")
+	trimSteering := flag.Int("strim", 0, "Steering trim: between -15000 and 15000") //5500 for little truck
 
 	flag.Parse()
 
@@ -32,12 +36,12 @@ func main() {
 	} else {
 		errorGroup, ctx := errgroup.WithContext(context.Background())
 
-		c := client.NewClient(":"+*udpPort, *controlDeviceCfg)
+		c := client.NewClient(*host+":"+*udpPort, *controlDeviceCfg, *invertESC, *invertSteering, *trimSteering)
 		errorGroup.Go(func() error { return c.RunClient(ctx) })
 
 		err := errorGroup.Wait()
 		if err != nil {
-			log.Fatalf("Errorgroup had error: %s", err.Error())
+			log.Fatalf("error: %s", err.Error())
 		}
 	}
 }

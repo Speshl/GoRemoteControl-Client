@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/0xcafed00d/joystick"
-	"github.com/Speshl/GoRemoteControl/models"
+	"github.com/Speshl/GoRemoteControl_Server/models"
 	"github.com/tidwall/gjson"
 )
 
@@ -15,11 +15,14 @@ var (
 	_ ControllerIface = (*Controller)(nil)
 )
 
-func CreateController(js []joystick.Joystick, cfgPath string) (*Controller, error) {
+func CreateController(js []joystick.Joystick, cfgPath string, invertEsc bool, invertSteering bool, trimSteering int) (*Controller, error) {
 
 	controller := Controller{
 		joystick:       js,
 		internalStates: make([]joystick.State, len(js)),
+		invertEsc:      invertEsc,
+		invertSteering: invertSteering,
+		trimSteering:   trimSteering,
 	}
 
 	file, err := os.Open(cfgPath)

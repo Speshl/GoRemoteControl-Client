@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"github.com/0xcafed00d/joystick"
-	"github.com/Speshl/GoRemoteControl/models"
+	"github.com/Speshl/GoRemoteControl_Server/models"
 )
 
 type ControllerIface interface {
@@ -17,6 +17,9 @@ type Controller struct {
 	cfg            Config
 	joystick       []joystick.Joystick
 	internalStates []joystick.State
+	invertEsc      bool
+	invertSteering bool
+	trimSteering   int
 }
 
 type Config struct {

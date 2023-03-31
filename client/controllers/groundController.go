@@ -4,19 +4,21 @@ import (
 	"log"
 	"math"
 
-	"github.com/Speshl/GoRemoteControl/models"
+	"github.com/Speshl/GoRemoteControl_Server/models"
 )
 
 func (c *Controller) mapGroundState() models.StateIface {
 	cfg := c.cfg.Config.(GroundConfig)
 	returnState := models.GroundState{
-		Steer:     c.getConfigEntryValue(cfg.Steer),
-		Gas:       c.getConfigEntryValue(cfg.Gas),
-		Brake:     c.getConfigEntryValue(cfg.Brake),
-		Clutch:    c.getConfigEntryValue(cfg.Clutch),
-		HandBrake: c.getConfigEntryValue(cfg.HandBrake),
-		Pan:       c.getConfigEntryValue(cfg.Pan),
-		Tilt:      c.getConfigEntryValue(cfg.Tilt),
+		Steer:          c.getConfigEntryValue(cfg.Steer) + c.trimSteering,
+		Gas:            c.getConfigEntryValue(cfg.Gas),
+		Brake:          c.getConfigEntryValue(cfg.Brake),
+		Clutch:         c.getConfigEntryValue(cfg.Clutch),
+		HandBrake:      c.getConfigEntryValue(cfg.HandBrake),
+		Pan:            c.getConfigEntryValue(cfg.Pan),
+		Tilt:           c.getConfigEntryValue(cfg.Tilt),
+		InvertSteering: c.invertSteering,
+		InvertEsc:      c.invertEsc,
 	}
 
 	returnState.NumGears = len(cfg.Gears) - 1 //Don't count reverse

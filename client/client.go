@@ -10,19 +10,26 @@ import (
 	"time"
 
 	"github.com/0xcafed00d/joystick"
-	"github.com/Speshl/GoRemoteControl/client/controllers"
-	"github.com/Speshl/GoRemoteControl/models"
+	"github.com/Speshl/GoRemoteControl_Client/client/controllers"
+	"github.com/Speshl/GoRemoteControl_Server/models"
 )
 
 type Client struct {
-	address string
-	cfgPath string
+	address        string
+	cfgPath        string
+	invertEsc      bool
+	invertSteering bool
+	trimSteering   int
 }
 
-func NewClient(address string, cfgPath string) *Client {
+func NewClient(address string, cfgPath string, invertEsc bool, invertSteering bool, trimSteering int) *Client {
+	log.Printf("Server Address: %s, CFG Path: %s, InvertESC: %t, InvertSteering: %t, TrimSteering: %d", address, cfgPath, invertEsc, invertSteering, trimSteering)
 	client := Client{
-		address: address,
-		cfgPath: cfgPath,
+		address:        address,
+		cfgPath:        cfgPath,
+		invertEsc:      invertEsc,
+		invertSteering: invertSteering,
+		trimSteering:   trimSteering,
 	}
 	return &client
 }
@@ -31,12 +38,7 @@ func (c *Client) RunClient(ctx context.Context) error {
 	log.Println("starting client...")
 	defer log.Println("client stopped")
 
-	udpServer, err := net.ResolveUDPAddr("udp", c.address)
-	if err != nil {
-		return err
-	}
-
-	conn, err := net.DialUDP("udp", nil, udpServer)
+	conn, err := net.Dial("udp", c.address) //TODO: IP as a param
 	if err != nil {
 		return err
 	}
@@ -52,17 +54,21 @@ func (c *Client) RunClient(ctx context.Context) error {
 		}
 	}()
 
-	controller, err := controllers.CreateController(joySticks, c.cfgPath)
+	controller, err := controllers.CreateController(joySticks, c.cfgPath, c.invertEsc, c.invertSteering, c.trimSteering)
 	if err != nil {
 		return err
 	}
 	log.Println("start sending...")
 	defer log.Println("sending stopped")
 	ticker := time.NewTicker(4 * time.Millisecond)
+	var lastSent models.Packet
+	logTicker := time.NewTicker(5 * time.Second)
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
+		case <-logTicker.C:
+			log.Printf("ticker log - latest UDP packet sent: %+v\n", lastSent.State)
 		case <-ticker.C:
 			state, err := controller.GetUpdatedState()
 			if err != nil {
@@ -85,7 +91,8 @@ func (c *Client) RunClient(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
-			//log.Printf("%+v\n", state)
+			//log.Printf("%+v\n", statePacket.State)
+			lastSent = statePacket
 		}
 	}
 }
